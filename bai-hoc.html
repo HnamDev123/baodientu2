@@ -169,28 +169,68 @@
     <p class="demo-end">✦ Hết bài học ✦</p>
   </section>
 
+  <!-- ============ DÂY ĐÈN: giật dây để mở phần tri ân ============ -->
+  <section id="keo" class="pull" aria-label="Kết bài">
+    <i class="pull-glow" aria-hidden="true"></i>
+    <canvas id="keoCv" aria-hidden="true"></canvas>
+    <button id="keoGrab" type="button" aria-label="Kéo sợi dây xuống để bật đèn"></button>
+    <p class="keo-hint" id="keoHint"><span class="kh-eye">Còn một điều nữa…</span><b>Kéo sợi dây xuống nào</b><i class="kh-arrow" aria-hidden="true">↓</i></p>
+  </section>
+
   <footer class="foot">
     <p>Binh Minh International School · Một sản phẩm đến từ nhóm BTS lớp 10A4</p>
   </footer>
 </main>
 
-<!-- ============ KẾT BÀI: công thức bay thành chữ TRI ÂN + con thuyền ============ -->
-<div id="finale" role="dialog" aria-modal="true" aria-labelledby="finTitle">
+<!-- ============ KẾT BÀI: màn đen + nhạc + chữ + hoa + lời chúc + ảnh thầy cô ============ -->
+<audio id="bgm" src="nhac.mp3" preload="none" loop></audio>
+<div id="finale" role="dialog" aria-modal="true" aria-label="Lời tri ân gửi thầy cô">
   <canvas id="fx" aria-hidden="true"></canvas>
-  <p class="fin-banner" id="finBanner" aria-hidden="true"></p>
-  <div class="fin-msg" id="finMsg">
-    <p class="fin-eyebrow">20/11 · Lời tri ân</p>
-    <h2 id="finTitle">Tri ân người lái đò</h2>
-    <p class="fin-text">Cảm ơn thầy cô đã gieo mầm tri thức cho chúng em. Kính chúc quý thầy cô luôn dồi dào sức khỏe, hạnh phúc và mãi là ngọn lửa nhiệt huyết của ngôi trường Bình Minh.</p>
-    <p class="fin-sign">— Nhóm BTS · Lớp 10A4</p>
-    <div class="fin-actions">
-      <button id="finReplay" type="button" hidden>↻ Xem lại</button>
-      <button id="finBack" type="button" hidden>← Về bài học</button>
-    </div>
+
+  <!-- ẢNH THẦY CÔ: thay file thay-co-N.webp (giữ tỉ lệ dọc 3:4). Điền tên vào <figcaption> nếu muốn hiện tên. -->
+  <figure class="fp fp1"><div class="fp-in"><img src="thay-co-1.webp" alt="Ảnh thầy cô" loading="lazy"><figcaption></figcaption></div></figure>
+  <figure class="fp fp2"><div class="fp-in"><img src="thay-co-2.webp" alt="Ảnh thầy cô" loading="lazy"><figcaption></figcaption></div></figure>
+  <figure class="fp fp3"><div class="fp-in"><img src="thay-co-3.webp" alt="Ảnh thầy cô" loading="lazy"><figcaption></figcaption></div></figure>
+  <figure class="fp fp4"><div class="fp-in"><img src="thay-co-4.webp" alt="Ảnh thầy cô" loading="lazy"><figcaption></figcaption></div></figure>
+  <figure class="fp fp5"><div class="fp-in"><img src="thay-co-5.webp" alt="Ảnh thầy cô" loading="lazy"><figcaption></figcaption></div></figure>
+
+  <div class="fin-intro" id="finIntro" aria-live="polite"></div>
+
+  <div class="fin-wish" id="finWish">
+    <p class="fw-eye">20/11 · Lời tri ân</p>
+    <h2 class="fw-title">Gửi những người lái đò</h2>
+    <p class="fw-text" id="fwText"></p>
+    <p class="fw-sign" id="fwSign"></p>
   </div>
+
+  <button class="fin-sound" id="finSound" type="button" aria-label="Bật/tắt nhạc" aria-pressed="false">
+    <svg class="i-on" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+    <svg class="i-off" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>
+  </button>
+  <div class="fin-actions">
+    <button id="finSkip" class="fa-skip" type="button" hidden>Bỏ qua ›</button>
+    <button id="finReplay" type="button" hidden>↻ Xem lại</button>
+    <button id="finBack" type="button" hidden>← Về bài học</button>
+  </div>
+
+  <!-- ===== NỘI DUNG CÓ THỂ SỬA TẠI ĐÂY (mỗi <li> là một câu, hiện lần lượt) ===== -->
+  <ol id="introSrc" hidden>
+    <li data-hold="1500">Ơ… gì ấy nhỉ?</li>
+    <li data-hold="1100">À, quên mất!</li>
+    <li data-hold="2600">Còn một phần chúng em muốn gửi đến thầy cô…</li>
+  </ol>
+  <ol id="wishSrc" hidden>
+    <li>Cảm ơn thầy cô đã kiên nhẫn gieo từng con chữ, từng phép tính trên hành trình lớn lên của chúng em.</li>
+    <li>Có những điều thầy cô dạy không nằm trong sách giáo khoa — đó là cách đứng dậy sau mỗi lần vấp ngã.</li>
+    <li>Chúng em xin lỗi vì những giờ học còn ồn ào, những bài tập còn nộp muộn… và cảm ơn vì thầy cô vẫn luôn mỉm cười.</li>
+    <li>Kính chúc quý thầy cô thật nhiều sức khỏe, niềm vui và mãi giữ ngọn lửa nhiệt huyết của ngôi trường Bình Minh.</li>
+    <li>Chúc thầy cô một ngày 20/11 thật ấm áp, ngập tràn hoa và những nụ cười của học trò.</li>
+  </ol>
+  <p id="wishSign" hidden>— Nhóm BTS · Lớp 10A4</p>
 </div>
 
 <script src="common.js"></script>
 <script src="lesson.js"></script>
+<script src="finale.js"></script>
 </body>
 </html>
