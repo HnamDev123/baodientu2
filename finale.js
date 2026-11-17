@@ -74,33 +74,34 @@ btnSnd.addEventListener('click', () => {
 
 
 /* =====================================================
-   1. DÂY ĐÈN — treo lơ lửng, người xem kéo dây xuống
+   1. DÂY ĐÈN — rơi từ mép trên màn hình xuống, người xem kéo dây
    ===================================================== */
 const lc = $('#keoCv'), lx = lc.getContext('2d'), grab = $('#keoGrab'), hintEl = $('#keoHint');
 const LCOL = ['#ffd27a', '#ff9ec0', '#ffb066', '#9ad8ff', '#fff1c9', '#c4b5ff'].map(hexRGB);
 let LW = 0, LH = 0, LD = 1, strands = [], lstars = [];
-let seen = false, vis = false, lraf = 0, dropT0 = 0, lastT = 0;
+let seen = false, active = false, lraf = 0, lastT = 0, swingT0 = 0;
+let ds = 0, dv = 0;                                           // độ rơi (0 = ở trên trời, 1 = đã rơi xuống) + vận tốc lò xo
 let lit = false, tTrig = 0;
 let pull = 0, pv = 0, dragging = false, moved = false, dragY0 = 0, auto = null, crossed = false;
 const THR = 80, MAXP = 150;
 
 function buildLights() {
-  const r = sec.getBoundingClientRect();
   LD = Math.min(2, devicePixelRatio || 1);
-  LW = Math.max(1, Math.round(r.width)); LH = Math.max(1, Math.round(r.height));
-  lc.width = LW * LD; lc.height = LH * LD;
+  LW = innerWidth; LH = innerHeight;
+  lc.width = Math.round(LW * LD); lc.height = Math.round(LH * LD);
+  lc.style.width = LW + 'px'; lc.style.height = LH + 'px';
   const small = LW < 560, per = small ? 42 : 56, rb = small ? 6.2 : 8;
   const nA = 2 * Math.max(4, Math.round(LW / per / 2));
-  const sagA = Math.min(LH * .24, 190);
+  const sagA = Math.min(LH * .1, 100);
   const mk = (o, n, sc) => Object.assign(o, { sc, r: rb * sc, bulbs: Array.from({ length: n }, (_, i) => ({
     u: (i + .5) / n, col: LCOL[(i * 5 + (o.seed | 0)) % LCOL.length], ph: rnd(0, 6.28), len: (10 + rnd(0, 6)) * sc, d: 0 })) });
   strands = [
-    mk({ y0: 6, sag: sagA * .56, sw: 1, back: true, seed: 2 }, nA - 2, .74),
-    mk({ y0: 6, sag: sagA * .42, sw: 2, back: true, seed: 4 }, nA, .8),
-    mk({ y0: 10, sag: sagA, sw: 1, main: true, seed: 0 }, nA, 1)
+    mk({ y0: -4, sag: sagA * .55, sw: 1, back: true, seed: 2 }, nA - 2, .74),
+    mk({ y0: -4, sag: sagA * .42, sw: 2, back: true, seed: 4 }, nA, .8),
+    mk({ y0: -2, sag: sagA, sw: 1, main: true, seed: 0 }, nA, 1)
   ];
   strands.forEach(s => s.bulbs.forEach(b => { b.d = Math.abs(b.u - .5) * 1500 + rnd(0, 160); }));
-  lstars = Array.from({ length: small ? 34 : 60 }, () => ({ x: rnd(0, LW), y: rnd(0, LH), s: rnd(.6, 1.7), ph: rnd(0, 6.3), tw: rnd(.8, 2.4) }));
+  lstars = Array.from({ length: small ? 40 : 80 }, () => ({ x: rnd(0, LW), y: rnd(0, LH), s: rnd(.6, 1.8), ph: rnd(0, 6.3), tw: rnd(.8, 2.4) }));
 }
 function pt(s, u, dip) {
   const uu = s.sw === 2 ? (u * 2) % 1 : u;
@@ -109,50 +110,60 @@ function pt(s, u, dip) {
   if (s.main && dip) y += dip * Math.pow(Math.sin(Math.PI * u), 3);
   return [x, y];
 }
-function drawBulb(x, y, ang, r, len, rgb, L, t, ph) {
+function drawBulb(x, y, ang, r, len, rgb, L) {
   lx.save(); lx.translate(x, y); lx.rotate(ang);
-  lx.strokeStyle = '#2a2a4e'; lx.lineWidth = 1.2;
+  lx.strokeStyle = '#4a4a7a'; lx.lineWidth = 1.2;
   lx.beginPath(); lx.moveTo(0, 0); lx.lineTo(0, len); lx.stroke();
-  lx.fillStyle = '#3a3a63'; lx.fillRect(-r * .42, len, r * .84, r * .8);
+  lx.fillStyle = '#4a4a7a'; lx.fillRect(-r * .42, len, r * .84, r * .8);
   const by = len + r * .8 + r * 1.05;
   if (L > .02) {
-    lx.globalCompositeOperation = 'lighter';
     const g = lx.createRadialGradient(0, by, 0, 0, by, r * 6);
-    g.addColorStop(0, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${.6 * L})`);
+    g.addColorStop(0, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${.55 * L})`);
     g.addColorStop(.35, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${.2 * L})`);
     g.addColorStop(1, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0)`);
     lx.fillStyle = g; lx.beginPath(); lx.arc(0, by, r * 6, 0, TAU); lx.fill();
-    lx.globalCompositeOperation = 'source-over';
   }
   const mix = (a, b) => Math.round(lerp(a, b, L));
   const gl = lx.createRadialGradient(-r * .3, by - r * .35, r * .1, 0, by, r * 1.15);
-  gl.addColorStop(0, `rgb(${mix(110, 255)},${mix(110, 250)},${mix(150, 235)})`);
-  gl.addColorStop(1, `rgb(${mix(62, rgb[0])},${mix(62, rgb[1])},${mix(98, rgb[2])})`);
+  gl.addColorStop(0, `rgb(${mix(240, 255)},${mix(240, 250)},${mix(252, 235)})`);
+  gl.addColorStop(1, `rgb(${mix(176, rgb[0])},${mix(176, rgb[1])},${mix(214, rgb[2])})`);
   lx.fillStyle = gl; lx.beginPath(); lx.ellipse(0, by, r * .92, r * 1.12, 0, 0, TAU); lx.fill();
+  if (L < .9) { lx.strokeStyle = `rgba(70,70,125,${.5 * (1 - L)})`; lx.lineWidth = 1; lx.stroke(); }
   lx.restore();
 }
 function lightsFrame(now) {
   lraf = 0;
-  if (!vis) return;
   const t = now / 1000, dt = Math.min(.033, (now - lastT) / 1000 || .016); lastT = now;
+
+  // lò xo rơi xuống (nảy) / thu lên
+  const tgt = active ? 1 : 0, k = 60, cdamp = active ? 7 : 20;
+  dv += (-k * (ds - tgt) - cdamp * dv) * dt; ds += dv * dt;
+  if (reduce) { ds = tgt; dv = 0; }
+  if (!active && ds < .003 && Math.abs(dv) < .02) { ds = 0; dv = 0; lx.setTransform(LD, 0, 0, LD, 0, 0); lx.clearRect(0, 0, LW, LH); grab.classList.remove('act'); return; }
+
   lx.setTransform(LD, 0, 0, LD, 0, 0); lx.clearRect(0, 0, LW, LH);
+  const off = -(1 - ds) * LH * 1.05;
+  const exc = reduce ? 0 : Math.exp(-1.1 * (now - swingT0) / 1000);
+  const veil = lit ? clamp01((now - tTrig) / 1100) * .88 : 0;
 
-  // sao nền
-  lx.fillStyle = '#fff';
-  for (const s of lstars) { lx.globalAlpha = (.12 + .3 * Math.max(0, Math.sin(t * s.tw + s.ph))) * (lit ? 1.4 : 1); lx.fillRect(s.x, s.y, s.s, s.s); }
-  lx.globalAlpha = 1;
+  // nền kem mờ trượt xuống cùng dây, để dây đèn không rối với chữ của bài
+  { const wh = Math.min(LH * .3, 240), wg = lx.createLinearGradient(0, off, 0, off + wh);
+    wg.addColorStop(0, 'rgba(251,250,246,.97)'); wg.addColorStop(.62, 'rgba(251,250,246,.85)'); wg.addColorStop(1, 'rgba(251,250,246,0)');
+    lx.fillStyle = wg; lx.fillRect(0, off - LH, LW, wh + LH); }
 
-  // thả đèn xuống (nảy lò xo) + đung đưa
-  const dts = (now - dropT0) / 1000;
-  const sp = (!seen || reduce) ? (seen ? 1 : 0) : 1 - Math.exp(-4.2 * dts) * Math.cos(8.5 * dts);
-  const off = -(1 - sp) * LH * .95;
-  const exc = reduce ? 0 : Math.exp(-1.1 * dts);
+  // đèn bật → nền tối dần
+  if (veil > 0) {
+    lx.fillStyle = `rgba(6,6,24,${veil})`; lx.fillRect(0, 0, LW, LH);
+    lx.fillStyle = '#fff';
+    for (const s of lstars) { lx.globalAlpha = veil * (.1 + .35 * Math.max(0, Math.sin(t * s.tw + s.ph))); lx.fillRect(s.x, s.y, s.s, s.s); }
+    lx.globalAlpha = 1;
+  }
 
   // dây cầm: kéo / tự kéo / lò xo nảy về
   if (auto) {
-    const k = clamp01((now - auto.t0) / auto.dur), e = 1 - Math.pow(1 - k, 3);
+    const kk = clamp01((now - auto.t0) / auto.dur), e = 1 - Math.pow(1 - kk, 3);
     pull = lerp(auto.from, auto.to, e);
-    if (k >= 1) { auto = null; ignite(); }
+    if (kk >= 1) { auto = null; ignite(); }
   } else if (!dragging) {
     pv += (-220 * pull - 14 * pv) * dt; pull += pv * dt;
     if (Math.abs(pull) < .05 && Math.abs(pv) < .5) { pull = 0; pv = 0; }
@@ -160,64 +171,74 @@ function lightsFrame(now) {
 
   const A = strands[2], dip = pull * .22;
   const [axx, ayy] = pt(A, .5, dip);
-  const cordLen = Math.max(100, Math.min(150, LH * .2));
+  const cordLen = Math.max(110, Math.min(180, LH * .22));
   const sway = reduce ? 0 : Math.sin(t * 1.3) * 3 + exc * Math.sin(t * 5) * 14;
   const hx = LW / 2 + sway, hy = ayy + off + cordLen + pull;
   const litAmt = lit ? clamp01((now - tTrig) / 800) : 0;
 
   for (const s of strands) {
-    lx.strokeStyle = litAmt > .3 ? (s.back ? '#4a4a86' : '#6b6bb0') : (s.back ? '#2d2d58' : '#43437a');
+    lx.strokeStyle = veil > .3 ? (s.back ? '#6a6aa6' : '#8c8cc8') : (s.back ? '#8a8ab4' : '#5b5b94');
     lx.lineWidth = s.back ? 1.3 : 1.8;
     lx.beginPath();
     for (let i = 0; i <= 56; i++) { const [x, y] = pt(s, i / 56, dip); i ? lx.lineTo(x, y + off) : lx.moveTo(x, y + off); }
     lx.stroke();
     for (const b of s.bulbs) {
       const [bx, by] = pt(s, b.u, dip);
-      const L = lit ? clamp01((now - tTrig - b.d) / 280) : .05 + .04 * Math.sin(t * 2 + b.ph);
+      const L = lit ? clamp01((now - tTrig - b.d) / 280) : 0;
       const ang = reduce ? 0 : Math.sin(t * 1.6 + b.ph) * .035 + exc * Math.sin(t * 5 + b.ph) * .3;
-      drawBulb(bx, by + off, ang, s.r, b.len, b.col, L, t, b.ph);
+      drawBulb(bx, by + off, ang, s.r, b.len, b.col, L);
     }
   }
 
   // sợi dây + chuỗi hạt + tay cầm
-  lx.strokeStyle = 'rgba(210,210,245,.75)'; lx.lineWidth = 1.4;
+  lx.strokeStyle = veil > .3 ? 'rgba(220,220,250,.8)' : 'rgba(70,70,125,.75)'; lx.lineWidth = 1.4;
   lx.beginPath(); lx.moveTo(axx, ayy + off); lx.lineTo(hx, hy); lx.stroke();
-  lx.fillStyle = '#d9d9f5';
+  lx.fillStyle = veil > .3 ? '#d9d9f5' : '#6b6bb0';
   const dist = Math.hypot(hx - axx, hy - (ayy + off)), nb = Math.floor(dist / 9);
-  for (let i = 1; i < nb; i++) { const k = i / nb; lx.beginPath(); lx.arc(lerp(axx, hx, k), lerp(ayy + off, hy, k), 1.5, 0, TAU); lx.fill(); }
-  lx.fillStyle = '#8e8ec8'; lx.beginPath(); lx.arc(axx, ayy + off, 4, 0, TAU); lx.fill();
-  if (!lit && !dragging && !auto) {                          // vòng gợi ý
-    const k = (t % 1.7) / 1.7;
-    lx.strokeStyle = `rgba(255,178,125,${.6 * (1 - k)})`; lx.lineWidth = 2;
-    lx.beginPath(); lx.arc(hx, hy + 6, 12 + k * 26, 0, TAU); lx.stroke();
+  for (let i = 1; i < nb; i++) { const q = i / nb; lx.beginPath(); lx.arc(lerp(axx, hx, q), lerp(ayy + off, hy, q), 1.5, 0, TAU); lx.fill(); }
+  lx.fillStyle = '#6b6bb0'; lx.beginPath(); lx.arc(axx, ayy + off, 4, 0, TAU); lx.fill();
+  if (!lit && !dragging && !auto && ds > .9) {                 // vòng gợi ý
+    const q = (t % 1.7) / 1.7;
+    lx.strokeStyle = `rgba(242,106,33,${.6 * (1 - q)})`; lx.lineWidth = 2;
+    lx.beginPath(); lx.arc(hx, hy + 6, 12 + q * 26, 0, TAU); lx.stroke();
   }
   const ready = pull >= THR && dragging;
-  lx.globalCompositeOperation = 'lighter';
   const hg = lx.createRadialGradient(hx, hy + 6, 0, hx, hy + 6, 34);
-  hg.addColorStop(0, `rgba(255,150,80,${ready || lit ? .55 : .28})`); hg.addColorStop(1, 'rgba(255,150,80,0)');
+  hg.addColorStop(0, `rgba(255,150,80,${ready || lit ? .6 : .3})`); hg.addColorStop(1, 'rgba(255,150,80,0)');
   lx.fillStyle = hg; lx.beginPath(); lx.arc(hx, hy + 6, 34, 0, TAU); lx.fill();
-  lx.globalCompositeOperation = 'source-over';
-  lx.strokeStyle = '#ff9a5c'; lx.lineWidth = 3.2; lx.beginPath(); lx.arc(hx, hy + 6, 9.5, 0, TAU); lx.stroke();
+  lx.strokeStyle = '#f26a21'; lx.lineWidth = 3.4; lx.beginPath(); lx.arc(hx, hy + 6, 9.5, 0, TAU); lx.stroke();
   lx.fillStyle = '#f26a21'; lx.beginPath(); lx.moveTo(hx, hy + 16); lx.lineTo(hx - 5, hy + 34); lx.lineTo(hx + 5, hy + 34); lx.closePath(); lx.fill();
-  lx.fillStyle = '#ffb27d'; lx.beginPath(); lx.ellipse(hx, hy + 36, 5, 4, 0, 0, TAU); lx.fill();
+  lx.fillStyle = '#ff9a5c'; lx.beginPath(); lx.ellipse(hx, hy + 36, 5, 4, 0, 0, TAU); lx.fill();
   grab.style.transform = `translate(${hx.toFixed(1)}px,${(hy + 16).toFixed(1)}px)`;
 
   lraf = requestAnimationFrame(lightsFrame);
 }
-function wakeLights() { if (!lraf && vis) { lastT = performance.now(); lraf = requestAnimationFrame(lightsFrame); } }
+function wakeLights() { if (!lraf) { lastT = performance.now(); lraf = requestAnimationFrame(lightsFrame); } }
+function setActive(v) {
+  if (v === active) return;
+  active = v;
+  if (v) { swingT0 = performance.now(); grab.classList.add('act'); }
+  hintEl.classList.toggle('on', v);
+  wakeLights();
+}
 
+// Rơi xuống khi người xem cuộn tới cuối bài; cuộn lên lại thì dây thu về trời
 new IntersectionObserver(es => es.forEach(e => {
-  vis = e.isIntersecting;
-  if (vis && e.intersectionRatio >= .25 && !seen) { seen = true; dropT0 = performance.now(); if (bgm) { try { bgm.preload = 'auto'; bgm.load(); } catch (er) { /* bỏ qua */ } } }
-  if (vis) wakeLights();
-}), { threshold: [0, .25, .5] }).observe(sec);
-addEventListener('resize', () => { buildLights(); });
+  if (lit || on) return;
+  setActive(e.isIntersecting && e.intersectionRatio >= .3);
+  if (e.isIntersecting && !seen) { seen = true; if (bgm) { try { bgm.preload = 'auto'; bgm.load(); } catch (er) { /* bỏ qua */ } } }
+}), { threshold: [0, .3, .6] }).observe(sec);
+let lastW = innerWidth, lastH = innerHeight;
+addEventListener('resize', () => {
+  if (innerWidth === lastW && Math.abs(innerHeight - lastH) < 120) return;   // bỏ qua việc thanh địa chỉ co giãn
+  lastW = innerWidth; lastH = innerHeight; buildLights();
+});
 buildLights();
 
 function ignite() {
   if (lit) return;
   lit = true; tTrig = performance.now();
-  sec.classList.add('lit'); hintEl.classList.add('off');
+  hintEl.classList.add('off');
   grab.disabled = true;
   if (navigator.vibrate) { try { navigator.vibrate([18, 40, 18]); } catch (e) { /* bỏ qua */ } }
   setTimeout(openFinale, reduce ? 500 : 1700);
@@ -257,8 +278,10 @@ grab.addEventListener('contextmenu', e => e.preventDefault());
 
 function resetLights() {
   lit = false; pull = 0; pv = 0; auto = null; dragging = false;
-  sec.classList.remove('lit'); hintEl.classList.remove('off'); grab.disabled = false;
-  dropT0 = performance.now(); wakeLights();
+  hintEl.classList.remove('off'); grab.disabled = false;
+  ds = 0; dv = 0; active = false;                            // cho dây rơi lại từ đầu nếu vẫn đang ở cuối trang
+  const r = sec.getBoundingClientRect(), vis = Math.min(r.bottom, innerHeight) - Math.max(r.top, 0);
+  setActive(vis >= r.height * .3);
 }
 
 

@@ -442,24 +442,22 @@ html.arrive #curtain .ct-line u{width:100%}
    KẾT BÀI (v3) — dây đèn giật → màn đen + nhạc → lá & cánh hoa cuộn thành hoa → lời chúc + ảnh thầy cô
    ===================================================== */
 
-/* ---------- 1. Dây đèn treo, chờ người xem giật ---------- */
-.pull{position:relative;overflow:hidden;margin-top:34px;height:clamp(460px,82vh,720px);height:clamp(460px,82svh,720px);
-  background:linear-gradient(180deg,#15153f 0%,#0d0d2d 55%,#070719 100%);color:#fff;isolation:isolate}
-.pull-glow{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity 1.2s ease;
-  background:radial-gradient(70% 60% at 50% 30%,rgba(255,190,120,.26),rgba(255,140,170,.08) 55%,transparent 75%)}
-.pull.lit .pull-glow{opacity:1}
-#keoCv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
-#keoGrab{position:absolute;left:0;top:0;z-index:3;width:88px;height:112px;margin:-34px 0 0 -44px;border-radius:44px;
-  touch-action:none;cursor:grab;background:transparent;-webkit-tap-highlight-color:transparent;will-change:transform}
+/* ---------- 1. Dây đèn rơi từ trời xuống (lớp cố định trên trang) ---------- */
+.pull{height:clamp(460px,80vh,680px);height:clamp(460px,80svh,680px)}
+#keoCv{position:fixed;left:0;top:0;pointer-events:none;z-index:35}
+#keoGrab{position:fixed;left:0;top:0;z-index:36;width:88px;height:112px;margin:-34px 0 0 -44px;border-radius:44px;
+  touch-action:none;cursor:grab;background:transparent;-webkit-tap-highlight-color:transparent;will-change:transform;visibility:hidden}
+#keoGrab.act{visibility:visible}
 #keoGrab.drag{cursor:grabbing}
-#keoGrab:focus-visible{outline:2px solid #ffb27d;outline-offset:2px}
+#keoGrab:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
 #keoGrab:disabled{cursor:default;pointer-events:none}
-.keo-hint{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 8%);z-index:2;text-align:center;
-  pointer-events:none;padding:0 16px;transition:opacity .8s ease}
-.keo-hint.off{opacity:0}
-.kh-eye{display:block;font-family:var(--mono);font-size:11.5px;letter-spacing:.26em;text-transform:uppercase;color:#ffb27d;font-weight:700;padding-left:.26em}
-.keo-hint b{display:block;margin-top:6px;font-family:var(--serif);font-size:clamp(20px,5.6vw,30px);font-weight:700}
-.kh-arrow{display:block;margin-top:4px;font-style:normal;font-size:22px;color:#ffb27d;animation:bob 1.4s infinite}
+.keo-hint{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 9%);z-index:36;text-align:center;
+  pointer-events:none;padding:0 16px;opacity:0;transition:opacity .9s ease}
+.keo-hint.on{opacity:1}
+.keo-hint.on.off{opacity:0}
+.kh-eye{display:block;font-family:var(--mono);font-size:11.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--orange);font-weight:700;padding-left:.26em}
+.keo-hint b{display:block;margin-top:6px;font-family:var(--serif);font-size:clamp(20px,5.6vw,30px);font-weight:700;color:var(--navy)}
+.kh-arrow{display:block;margin-top:4px;font-style:normal;font-size:22px;color:var(--orange);animation:bob 1.4s infinite}
 
 /* ---------- 2. Lớp phủ đen: nhạc + chữ + hoa + lời chúc ---------- */
 body.fin-on{overflow:hidden}

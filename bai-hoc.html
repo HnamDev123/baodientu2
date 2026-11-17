@@ -169,18 +169,18 @@
     <p class="demo-end">✦ Hết bài học ✦</p>
   </section>
 
-  <!-- ============ DÂY ĐÈN: giật dây để mở phần tri ân ============ -->
-  <section id="keo" class="pull" aria-label="Kết bài">
-    <i class="pull-glow" aria-hidden="true"></i>
-    <canvas id="keoCv" aria-hidden="true"></canvas>
-    <button id="keoGrab" type="button" aria-label="Kéo sợi dây xuống để bật đèn"></button>
-    <p class="keo-hint" id="keoHint"><span class="kh-eye">Còn một điều nữa…</span><b>Kéo sợi dây xuống nào</b><i class="kh-arrow" aria-hidden="true">↓</i></p>
-  </section>
+  <!-- khoảng trống để cuộn tới; dây đèn thật nằm ở lớp cố định phía dưới -->
+  <section id="keo" class="pull" aria-label="Kết bài"></section>
 
   <footer class="foot">
     <p>Binh Minh International School · Một sản phẩm đến từ nhóm BTS lớp 10A4</p>
   </footer>
 </main>
+
+<!-- ============ DÂY ĐÈN rơi từ trên trời xuống: giật dây để mở phần tri ân ============ -->
+<canvas id="keoCv" aria-hidden="true"></canvas>
+<button id="keoGrab" type="button" aria-label="Kéo sợi dây xuống để bật đèn" tabindex="-1"></button>
+<p class="keo-hint" id="keoHint"><span class="kh-eye">Còn một điều nữa…</span><b>Kéo sợi dây xuống nào</b><i class="kh-arrow" aria-hidden="true">↓</i></p>
 
 <!-- ============ KẾT BÀI: màn đen + nhạc + chữ + hoa + lời chúc + ảnh thầy cô ============ -->
 <audio id="bgm" src="nhac.mp3" preload="none" loop></audio>
